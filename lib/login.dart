@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:project_uts/home.dart';
+import 'package:project_uts/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class MyLogin extends StatelessWidget {
@@ -23,7 +23,7 @@ class Login extends StatefulWidget {
 }
 
 class _LoginState extends State<Login> {
-  String _user_id = "";  // Pindahkan variabel ke dalam class state
+  String _user_id = "";  
 
   @override
   Widget build(BuildContext context) {
@@ -74,7 +74,7 @@ class _LoginState extends State<Login> {
                 borderRadius: BorderRadius.circular(20)),
               child: ElevatedButton(
                 onPressed: () {
-                  doLogin();  // Panggil fungsi doLogin saat tombol ditekan
+                  doLogin();  
                 },
                 child: const Text(
                   'Login',
@@ -88,22 +88,13 @@ class _LoginState extends State<Login> {
     );
   }
   void doLogin() async {
-  if (_user_id.isNotEmpty) {  // Periksa apakah _user_id tidak kosong
     final prefs = await SharedPreferences.getInstance();
-    prefs.setString("user_id", _user_id);  // Simpan user_id ke SharedPreferences
-    
-    // Navigasi ke home dengan mengganti stack, sehingga login page dihapus
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (context) => Home()), 
-      (route) => false
-    );
-  } else {
-    // Jika _user_id kosong, tampilkan pesan error
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text('Please enter a valid email.'),
-    ));
+    prefs.setString("user_id", _user_id);  
+    main();
+    // Navigator.pushAndRemoveUntil(
+    //   context,
+    //   MaterialPageRoute(builder: (context) => MyApp()), 
+    //   (route) => false
+    // );
   }
-}
-
 }

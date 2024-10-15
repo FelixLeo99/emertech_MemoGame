@@ -1,67 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:project_uts/highscore.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'main.dart';
+import 'package:project_uts/game.dart';
 
-class Home extends StatefulWidget {
-  Home({super.key});
-  @override
-  _HomeState createState() => _HomeState();
-}
-class _HomeState extends State<Home> {
-  String _user_id = "";
+
+class Home extends StatelessWidget {
+  const Home({super.key});
 
   @override
-  void initState() {
-    super.initState();
-    checkUser().then((value) {
-      setState(() {
-        _user_id = value;
-      });
-    });
-  }
-
-  Future<String> checkUser() async {
-    final prefs = await SharedPreferences.getInstance();
-    String user_id = prefs.getString("user_id") ?? '';
-    return user_id;
-  }
-
-  @override
-  Widget build (BuildContext context) {
+  Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text("Home"),
-      ),
-      drawer: Drawer(
-        elevation: 16.0,
-        child: Column(
-          children: <Widget>[
-            UserAccountsDrawerHeader(
-              accountName: Text(_user_id),
-              accountEmail: Text("$_user_id@gmail.com"),
-              currentAccountPicture: const CircleAvatar(
-                  backgroundImage: NetworkImage("https://i.pravatar.cc/150"),
-              ),
-            ),
-            ListTile(
-              title: const Text("High Score"),
-              leading: const Icon(Icons.leaderboard),
-              onTap: () {
-                Navigator.pushReplacementNamed(context, "/highscore");
-              },
-            ),
-            ListTile(
-              title: const Text("LOGOUT"),
-              leading: const Icon(Icons.logout),
-              onTap: () {
-                doLogout();
-              },
-            ),
-          ],
-        ),
-      ),
       body: Stack(
         children: [
           Container(
@@ -116,14 +62,5 @@ class _HomeState extends State<Home> {
         ],
       ),
     );
-  }
-
-  void doLogout() async {
-    final prefs = await SharedPreferences.getInstance();
-    prefs.remove("user_id");
-    setState(() {
-      _user_id = ""; 
-    });
-    Navigator.pushReplacementNamed(context, '/login');
   }
 }
