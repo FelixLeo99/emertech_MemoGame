@@ -23,27 +23,35 @@ class _MemoryGameState extends State<MemoryGame> {
   int point = 0;
   String _user_id = "";
 
-  void _getUserId() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _user_id = prefs.getString("user_id") ?? ''; 
-    });
-  }
-
   @override
   void initState() {
     super.initState();
-    _getUserId(); 
+    _getUserId();
     setupLevel();
+  }
+
+  @override
+  void dispose() {
+    patternTimer?.cancel();
+    gameTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _getUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _user_id = prefs.getString("user_id") ?? '';
+    });
   }
 
   void setupLevel() {
     gridColumns = 3;
-    gridRows = 3 + (level - 1); // Baris bertambah tiap level
-    squaresToRemember = level + 2; // Persegi yang diingat bertambah tiap level
+    gridRows = 3 + (level - 1);
+    squaresToRemember = level + 2;
     pattern = generateRandomPattern();
     userSelections = [];
     showPattern = true;
+    gameOver = false;
     timeRemaining = 30;
     startPatternTimer();
   }
@@ -90,8 +98,8 @@ class _MemoryGameState extends State<MemoryGame> {
         setState(() {
           if (level < 5) {
             level++;
-            setupLevel();
             point++;
+            setupLevel();
           } else {
             point++;
             showWinMessage();
@@ -119,8 +127,8 @@ class _MemoryGameState extends State<MemoryGame> {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text('Game Over!, $_user_id'),
-        content: Text('You made a wrong guess. Point(s): $point'),
+        title: Text('Game Over, $_user_id!'),
+        content: Text('You made a wrong guess. Points: $point'),
         actions: [
           TextButton(
             onPressed: () {
@@ -139,8 +147,8 @@ class _MemoryGameState extends State<MemoryGame> {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text('Congratulations $_user_id!'),
-        content: Text('You completed all levels! Point(s): $point'),
+        title: Text('Congratulations, $_user_id!'),
+        content: Text('You completed all levels! Points: $point'),
         actions: [
           TextButton(
             onPressed: () {
@@ -156,6 +164,8 @@ class _MemoryGameState extends State<MemoryGame> {
   }
 
   void resetGame() {
+    patternTimer?.cancel();
+    gameTimer?.cancel();
     setState(() {
       level = 1;
       point = 0;
@@ -168,7 +178,6 @@ class _MemoryGameState extends State<MemoryGame> {
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
     double screenHeight = MediaQuery.of(context).size.height;
-
     double gridSize = min(screenWidth, screenHeight) - 32;
     double itemSize = gridSize / gridColumns;
 
@@ -188,20 +197,44 @@ class _MemoryGameState extends State<MemoryGame> {
               itemBuilder: (context, index) {
                 bool isPatternSquare = pattern.contains(index);
                 bool isSelected = userSelections.contains(index);
+
                 return GestureDetector(
                   onTap: !showPattern && !gameOver && !isSelected
                       ? () => checkSelection(index)
                       : null,
-                  child: Container(
-                    width: itemSize,
-                    height: itemSize,
-                    decoration: BoxDecoration(
-                      color: showPattern
-                          ? (isPatternSquare ? Colors.teal : Colors.grey)
-                          : (isSelected ? Colors.green : Colors.grey),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    margin: EdgeInsets.all(4),
+                  child: AnimatedSwitcher(
+                    duration: Duration(milliseconds: 500),
+                    transitionBuilder:
+                        (Widget child, Animation<double> animation) {
+                      return RotationTransition(
+                        turns: child.key == ValueKey(showPattern)
+                            ? Tween(begin: 1.0, end: 0.0).animate(animation)
+                            : Tween(begin: 0.0, end: 1.0).animate(animation),
+                        child: child,
+                      );
+                    },
+                    child: showPattern
+                        ? Container(
+                            key: ValueKey(true),
+                            width: itemSize,
+                            height: itemSize,
+                            decoration: BoxDecoration(
+                              color:
+                                  isPatternSquare ? Colors.teal : Colors.grey,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            margin: EdgeInsets.all(4),
+                          )
+                        : Container(
+                            key: ValueKey(false),
+                            width: itemSize,
+                            height: itemSize,
+                            decoration: BoxDecoration(
+                              color: isSelected ? Colors.green : Colors.red,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            margin: EdgeInsets.all(4),
+                          ),
                   ),
                 );
               },
